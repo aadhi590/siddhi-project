@@ -1,71 +1,85 @@
-from datetime import datetime, timezone
+from datetime import datetime
+import json
 from app.database.models import Restaurant
 from app.schemas.intelligence import NewRestaurantResult
 
 class NewRestaurantDetectionService:
-    def __init__(self) -> None:
+    def __init__(self):
         pass
 
     def calculate_new_restaurant_score(self, restaurant: Restaurant) -> NewRestaurantResult:
-        """Calculates a score and determines if a restaurant is considered 'new'."""
-        score = 0
-        reasons = []
-
-        now = datetime.now(timezone.utc)
+        """
+        Calculates a score indicating how likely a restaurant is to be newly opened.
+        Assigns a categorization status based on the score and details.
+        """
+        score = 0.0
+        confidence = 0.5
+        evidence = []
+        reason = "Based on available data."
         
-        # Discovered date recency
-        if hasattr(restaurant, 'first_seen') and restaurant.first_seen:
-            days_since_discovery = (now - restaurant.first_seen.replace(tzinfo=timezone.utc)).days
-            if days_since_discovery <= 1:
-                score += 30
-                reasons.append("Discovered today")
-            elif days_since_discovery <= 7:
-                score += 20
-                reasons.append("Discovered this week")
-            elif days_since_discovery <= 30:
-                score += 10
-                reasons.append("Discovered this month")
+        # 1. Review count is a strong indicator
+        if restaurant.user_rating_count is not None:
+            if restaurant.user_rating_count == 0:
+                score += 50.0
+                confidence += 0.2
+                evidence.append("No reviews yet, highly likely to be new.")
+            elif restaurant.user_rating_count < 10:
+                score += 30.0
+                confidence += 0.1
+                evidence.append("Very few reviews (< 10).")
+            elif restaurant.user_rating_count > 100:
+                score -= 40.0
+                evidence.append("High number of reviews suggests it is established.")
+        else:
+            score += 10.0
+            evidence.append("Review count is unknown, slightly increasing likelihood.")
 
-        # Review count
-        reviews = restaurant.user_rating_count or 0
-        if reviews < 10:
-            score += 25
-            reasons.append(f"Very few reviews ({reviews})")
-        elif reviews < 30:
-            score += 15
-            reasons.append(f"Few reviews ({reviews})")
-        elif reviews < 50:
-            score += 10
-            reasons.append(f"Low review count ({reviews})")
+        # 2. Business status
+        if restaurant.business_status == "OPENING_SOON":
+            score += 80.0
+            confidence = 0.9
+            evidence.append("Business status explicitly says 'OPENING_SOON'.")
+        elif restaurant.business_status != "OPERATIONAL":
+            score -= 10.0
+            evidence.append(f"Business status is {restaurant.business_status}.")
+            
+        # 3. Discovery date (first seen)
+        today = datetime.utcnow().date()
+        if restaurant.first_seen:
+            first_seen_date = restaurant.first_seen.date()
+            if first_seen_date == today:
+                score += 40.0
+                confidence += 0.1
+                evidence.append("Newly discovered today.")
+            elif (today - first_seen_date).days < 30:
+                score += 20.0
+                evidence.append("Discovered within the last 30 days.")
 
-        # Business status
-        if restaurant.business_status == 'OPERATIONAL' and reviews < 30:
-            score += 15
-            reasons.append("Operational but few signals")
-
-        # Opening status
-        opening_status = getattr(restaurant, 'opening_status', None)
-        if opening_status == 'OPENING_SOON':
-            score += 20
-            reasons.append("Marked as opening soon")
-        elif opening_status == 'NEWLY_OPENED':
-            score += 15
-            reasons.append("Marked as newly opened")
-
-        # First seen == Last seen
-        if hasattr(restaurant, 'first_seen') and hasattr(restaurant, 'last_seen') and restaurant.first_seen and restaurant.last_seen:
-            if restaurant.first_seen == restaurant.last_seen:
-                score += 10
-                reasons.append("First time seeing this place")
-
-        # Cap score at 100
-        score = min(score, 100)
-        is_new = score > 60
-        confidence = score / 100.0
-        reason_str = ", ".join(reasons)
-
+        # Normalize score between 0 and 100
+        score = max(0.0, min(100.0, score))
+        confidence = min(1.0, confidence)
+        
+        # Status assignment
+        status = "UNKNOWN"
+        is_new = score >= 50.0
+        
+        if restaurant.first_seen and restaurant.first_seen.date() == today and restaurant.user_rating_count in (None, 0):
+            status = "NEWLY_DISCOVERED"
+        elif restaurant.business_status == "OPENING_SOON":
+            status = "OPENING_SOON"
+        elif score > 60:
+            status = "LIKELY_NEW"
+        elif score < 30 and restaurant.user_rating_count and restaurant.user_rating_count > 50:
+            status = "ESTABLISHED"
+            
+        if not evidence:
+            evidence.append("Insufficient data to determine newness.")
+            
         return NewRestaurantResult(
+            new_restaurant_score=score,
             is_new=is_new,
             confidence=confidence,
-            reason=reason_str
+            reason=" | ".join(evidence),
+            evidence=evidence,
+            status=status
         )

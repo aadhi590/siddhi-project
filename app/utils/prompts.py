@@ -172,3 +172,95 @@ Return valid JSON exactly in this structure:
     "low_competition_ids": [8]
 }}
 """
+
+MARKETING_READINESS_PROMPT = """
+Analyze restaurant marketing readiness. 
+Input: {restaurant_data}, {vision_data}. 
+Output JSON: 
+{{
+    "score": 85.5,
+    "confidence": 0.9,
+    "reasons": ["High rating", "Good photo quality"],
+    "evidence": {{"rating": 4.5}}
+}}
+Consider: review count, rating, website presence, social media, photo quality, price level, competition, location, branding. Always ground in evidence. If data is insufficient, reduce confidence and explain what is missing.
+"""
+
+PHOTO_INTELLIGENCE_PROMPT = """
+Analyze restaurant photos/vision data. 
+Input: {vision_labels}, {vision_objects}, {vision_text}, {restaurant_name}. 
+Output JSON: 
+{{
+    "interior_quality": "Good",
+    "exterior_quality": "Fair",
+    "ambience": "Cozy",
+    "premium_appearance": "Medium",
+    "branding_quality": "Good",
+    "instagram_friendliness": "High",
+    "menu_presentation": "Good",
+    "visual_strengths": ["Lighting", "Plating"],
+    "visual_weaknesses": ["Cluttered exterior"],
+    "confidence": 0.8
+}}
+(Interior/Exterior options: Poor/Fair/Good/Excellent, Premium/Instagram: Low/Medium/High). State when data is insufficient. If data is insufficient, reduce confidence and explain what is missing.
+"""
+
+BUSINESS_PROFILE_PROMPT = """
+Generate comprehensive business profile. 
+Input: {restaurant_data}, {vision_data}. 
+Output JSON: 
+{{
+    "restaurant_category": "Cafe",
+    "cuisine": "Italian",
+    "dining_style": "Casual",
+    "estimated_price_segment": "Mid Range",
+    "likely_customer_segments": ["Couples", "Families"],
+    "restaurant_style": "Modern",
+    "marketing_maturity": "Growing",
+    "branding_quality": "Good",
+    "digital_presence_quality": "Basic",
+    "operational_confidence": "Medium",
+    "confidence": 0.85,
+    "evidence": ["Has website", "High reviews"]
+}}
+Options:
+dining_style: Fine Dining/Casual/Fast Casual/QSR/Cafe/Bar/Cloud Kitchen/Buffet
+estimated_price_segment: Budget/Mid Range/Premium/Luxury
+restaurant_style: Instagram Friendly/Luxury/Traditional/Modern/Minimal/Theme Based
+marketing_maturity: Nascent/Growing/Mature/Established
+branding_quality: Poor/Fair/Good/Excellent
+digital_presence_quality: None/Basic/Good/Strong
+operational_confidence: Low/Medium/High
+
+If data is insufficient, reduce confidence and explain what is missing.
+"""
+
+BRANDING_SCORE_PROMPT = """
+Evaluate branding quality. 
+Input: {restaurant_data}, {vision_data}. 
+Output JSON: 
+{{
+    "score": 75.0,
+    "logo_quality": "Good",
+    "visual_consistency": "Fair",
+    "photography_quality": "Good",
+    "website_presence": "Basic",
+    "menu_presentation": "Good",
+    "storefront_quality": "Good",
+    "reasoning": "Consistent colors but lacks professional photos.",
+    "confidence": 0.8
+}}
+Always explain reasoning. If data is insufficient, reduce confidence and explain what is missing.
+"""
+
+DAILY_SALES_REPORT_PROMPT = """
+Generate daily sales intelligence summary. 
+Input: {report_data}. 
+Output text summary with key insights, action items, and recommendations. Return valid JSON containing the text summary in a "summary" field. If data is insufficient, reduce confidence and explain what is missing.
+"""
+
+FOLLOW_UP_OUTREACH_PROMPT = """
+Generate a follow-up message. 
+Input: {restaurant_data}, {previous_contact_info}. 
+Output a personalized follow-up message. Return valid JSON containing the message in a "follow_up_message" field. If data is insufficient, reduce confidence and explain what is missing.
+"""

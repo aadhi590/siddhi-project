@@ -23,6 +23,14 @@ from app.services.new_restaurant_service import NewRestaurantDetectionService
 from app.services.daily_insights_service import DailyInsightsService
 from app.core.config import get_settings
 
+from app.repositories.watchlist_repository import WatchAreaRepository
+from app.services.watchlist_service import WatchlistService
+from app.services.marketing_readiness_service import MarketingReadinessService
+from app.services.photo_intelligence_service import PhotoIntelligenceService
+from app.services.business_profile_service import BusinessProfileService
+from app.services.branding_score_service import BrandingScoreService
+from app.services.opportunity_index_service import OpportunityIndexService
+
 async def get_db_dep() -> AsyncGenerator[AsyncSession, None]:
     async for session in get_db():
         yield session
@@ -85,3 +93,24 @@ def get_new_restaurant_service() -> NewRestaurantDetectionService:
 
 def get_daily_insights_service(llm: BaseLLMService = Depends(get_llm_service_dep)) -> DailyInsightsService:
     return DailyInsightsService(llm)
+
+def get_watchlist_repository(session: AsyncSession = Depends(get_db_dep)) -> WatchAreaRepository:
+    return WatchAreaRepository(session)
+
+def get_watchlist_service(repo: WatchAreaRepository = Depends(get_watchlist_repository)) -> WatchlistService:
+    return WatchlistService(repo)
+
+def get_marketing_readiness_service() -> MarketingReadinessService:
+    return MarketingReadinessService()
+
+def get_photo_intelligence_service(llm: BaseLLMService = Depends(get_llm_service_dep)) -> PhotoIntelligenceService:
+    return PhotoIntelligenceService(llm)
+
+def get_business_profile_service(llm: BaseLLMService = Depends(get_llm_service_dep)) -> BusinessProfileService:
+    return BusinessProfileService(llm)
+
+def get_branding_score_service(llm: BaseLLMService = Depends(get_llm_service_dep)) -> BrandingScoreService:
+    return BrandingScoreService(llm)
+
+def get_opportunity_index_service() -> OpportunityIndexService:
+    return OpportunityIndexService()

@@ -13,6 +13,8 @@ from app.api.v1.routes.chennai import router as chennai_router
 from app.api.v1.routes.leads import router as leads_router
 from app.api.v1.routes.follow_up import router as follow_up_router
 from app.api.v1.routes.intelligence import router as intelligence_router
+from app.api.v1.routes.watchlist import router as watchlist_router
+from app.api.v1.routes.reports import router as reports_router
 
 logger = get_logger(__name__)
 
@@ -28,7 +30,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 app = FastAPI(
     title="Restaurant Lead Finder AI",
     description="AI-Powered Restaurant Lead Intelligence Platform for Chennai",
-    version="1.0.0",
+    version="2.0.0",
     lifespan=lifespan
 )
 
@@ -49,6 +51,8 @@ app.include_router(chennai_router, prefix="/api/v1")
 app.include_router(leads_router, prefix="/api/v1")
 app.include_router(follow_up_router, prefix="/api/v1")
 app.include_router(intelligence_router, prefix="/api/v1")
+app.include_router(watchlist_router, prefix="/api/v1")
+app.include_router(reports_router, prefix="/api/v1")
 
 @app.get("/")
 async def root() -> dict[str, str]:
