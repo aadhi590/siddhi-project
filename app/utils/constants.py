@@ -1,0 +1,38 @@
+from enum import Enum
+
+
+class RestaurantType(str, Enum):
+    FINE_DINING = "FINE_DINING"
+    CASUAL_DINING = "CASUAL_DINING"
+    FAST_FOOD = "FAST_FOOD"
+    CAFE = "CAFE"
+    BAR_LOUNGE = "BAR_LOUNGE"
+    FOOD_TRUCK = "FOOD_TRUCK"
+    BAKERY = "BAKERY"
+    OTHER = "OTHER"
+
+
+class BusinessStatus(str, Enum):
+    OPERATIONAL = "OPERATIONAL"
+    CLOSED_TEMPORARILY = "CLOSED_TEMPORARILY"
+    CLOSED_PERMANENTLY = "CLOSED_PERMANENTLY"
+
+
+class LLMProvider(str, Enum):
+    GEMINI = "GEMINI"
+    OPENAI = "OPENAI"
+
+
+class ScanStatus(str, Enum):
+    PENDING = "PENDING"
+    IN_PROGRESS = "IN_PROGRESS"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+
+
+DEFAULT_SCAN_RADIUS = 5000
+MAX_PHOTO_WIDTH = 800
+VISION_MAX_RESULTS = 20
+PLACES_NEARBY_URL = "nearbysearch/json"
+PLACES_DETAILS_URL = "details/json"
+PLACES_PHOTO_URL = "photo"

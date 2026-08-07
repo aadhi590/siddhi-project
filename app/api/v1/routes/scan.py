@@ -1,0 +1,40 @@
+from fastapi import APIRouter, HTTPException, Depends
+from app.schemas.scan import ScanRequest, ScanLocationRequest, ScanResponse, ScanStatusResponse
+from app.background.scanner import scanner
+from app.services.google_places_service import GooglePlacesService
+from app.core.dependencies import get_places_service
+
+router = APIRouter(prefix="/scan", tags=["Scan"])
+
+@router.post("/", response_model=ScanResponse)
+async def trigger_scan(request: ScanRequest, places_service: GooglePlacesService = Depends(get_places_service)):
+    lat, lng = await places_service.geocode_location(request.location)
+    if lat is None or lng is None:
+        raise HTTPException(status_code=400, detail="Could not geocode location")
+        
+    scan_id = await scanner.start_scan(
+        latitude=lat,
+        longitude=lng,
+        radius=request.radius,
+        keyword=request.keyword,
+        max_results=request.max_results
+    )
+    return ScanResponse(scan_id=scan_id, message="Scan started successfully")
+
+@router.post("/location", response_model=ScanResponse)
+async def trigger_scan_by_location(request: ScanLocationRequest):
+    scan_id = await scanner.start_scan(
+        latitude=request.latitude,
+        longitude=request.longitude,
+        radius=request.radius,
+        keyword=request.keyword,
+        max_results=request.max_results
+    )
+    return ScanResponse(scan_id=scan_id, message="Scan started successfully")
+
+@router.get("/{scan_id}", response_model=ScanStatusResponse)
+async def get_scan_status(scan_id: str):
+    status = scanner.get_scan_status(scan_id)
+    if not status:
+        raise HTTPException(status_code=404, detail="Scan not found")
+    return ScanStatusResponse(scan_id=scan_id, **status)
